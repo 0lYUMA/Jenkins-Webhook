@@ -3,8 +3,8 @@ pipeline {
 
     environment {
         RDS_URL = credentials('RDS_URL')
-        RDS_USERNAME = credentials('RDS_URL')
-        RDS_PASSWORD = credentials('RDS_PWD')
+        RDS_USER = credentials('RDS_USER')
+        RDS_PWD = credentials('RDS_PWD')
     }
 
     stages {
