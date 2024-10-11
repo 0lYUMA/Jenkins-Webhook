@@ -7,7 +7,7 @@ pipeline {
         RDS_PWD = credentials('RDS_PWD')
     }
 
-    stages {
+   stages {
         stage('Build') {
             steps {
                 script {
@@ -15,7 +15,11 @@ pipeline {
                     sh 'chmod +x ./gradlew' 
 
                     // Gradle 빌드 실행
-                    sh "./gradlew build -Drds.url=${env.RDS_URL} -Drds.username=${env.RDS_USER} -Drds.password=${env.RDS_PWD}"
+                    withCredentials([string(credentialsId: 'RDS_URL', variable: 'DB_URL'),
+                                     string(credentialsId: 'RDS_USER', variable: 'DB_USER'),
+                                     string(credentialsId: 'RDS_PWD', variable: 'DB_PWD')]) {
+                        sh "./gradlew build -Drds.url=\$DB_URL -Drds.username=\$DB_USER -Drds.password=\$DB_PWD"
+                    }
                 }
             }
         }
