@@ -1,37 +1,32 @@
 pipeline {
     agent any
 
-    stages {
-        stage('Fetch Secrets') {
-            steps {
-                script {
-                    // Secret Text로 RDS_URL, RDS_USERNAME, RDS_PASSWORD 불러오기
-                    withCredentials([string(credentialsId: 'RDS_URL', variable: 'RDS_URL'),
-                                     string(credentialsId: 'RDS_USER', variable: 'RDS_USER'),
-                                     string(credentialsId: 'RDS_PWD', variable: 'RDS_PWD')]) {
-                        
-                        // 자격 증명 출력 (테스트용, 실제 배포 시 민감 정보 출력하지 않도록 주의)
-                        echo "RDS URL: $RDS_URL"
-                        echo "RDS Username: $RDS_USER"
-                    }
-                }
-            }
-        }
+    environment {
+        RDS_URL = credentials('RDS_URL')
+        RDS_USER = credentials('RDS_USER')
+        RDS_PWD = credentials('RDS_PWD')
+    }
 
+    stages {
         stage('Build') {
             steps {
                 script {
-                    sh 'chmod +x gradlew'
-                    // 빌드 단계에서 환경 변수를 이용하여 빌드 수행
+                    // Gradle Wrapper에 실행 권한 부여
+                    sh 'chmod +x ./gradlew' 
+
+                    // Gradle 빌드 실행
                     sh "./gradlew build -Drds.url=${env.RDS_URL} -Drds.username=${env.RDS_USER} -Drds.password=${env.RDS_PWD}"
                 }
             }
         }
+    }
 
-        stage('Deploy') {
-            steps {
-                echo 'Deployment Stage'
-            }
+    post {
+        success {
+            echo 'Build completed successfully!'
+        }
+        failure {
+            echo 'Build failed.'
         }
     }
 }
