@@ -12,7 +12,7 @@ pipeline {
             steps {
                 script {
                     // Gradle Wrapper에 실행 권한 부여
-                    sh 'chmod +x ./gradlew'
+                    sh "chmod +x ./gradlew"
                     
                     sh "./gradlew build -Drds.url=${env.RDS_URL} -Drds.username=${env.RDS_USER} -Drds.password=${env.RDS_PWD}"
                 }
