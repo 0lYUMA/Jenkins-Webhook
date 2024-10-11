@@ -1,56 +1,36 @@
 pipeline {
     agent any
 
-    environment {
-        RDS_URL = credentials('RDS_URL')
-        RDS_USER = credentials('RDS_USER')
-        RDS_PWD = credentials('RDS_PWD')
-    }
-
     stages {
-        stage('Build') {
+        stage('Fetch Secrets') {
             steps {
                 script {
-                    // Gradle Wrapper에 실행 권한 부여
-                    sh 'chmod +x ./gradlew'
-                    
-                    sh "./gradlew build -Drds.url=\$RDS_URL -Drds.username=\$RDS_USER -Drds.password=\$RDS_PWD"
-                }
-            }
-        }
-
-        stage('Upload to S3') {
-            steps {
-                script {
-                    // 빌드된 Jar 파일을 S3로 업로드
-                    sh 'aws s3 cp build/libs/step18_empApp-0.0.1-SNAPSHOT.jar https://ce25-bucket-01.s3.ap-northeast-2.amazonaws.com/'
-                }
-            }
-        }
-
-        stage('Deploy to EC2') {
-            steps {
-                script {
-                    // EC2 인스턴스에 SSH로 접속하여 Jar 파일 다운로드 및 실행
-                    sshagent (credentials: ['ec2-ssh-key']) {
-                        sh """
-                        ssh -o StrictHostKeyChecking=no ubuntu@13.125.231.38 << 'EOF'
-                        aws s3 cp https://ce25-bucket-01.s3.ap-northeast-2.amazonaws.com/step18_empApp-0.0.1-SNAPSHOT.jar /home/ubuntu/
-                        nohup java -jar /home/ubuntu/step18_empApp-0.0.1-SNAPSHOT.jar > /dev/null 2>&1 &
-                        EOF
-                        """
+                    // Secret Text로 RDS_URL, RDS_USERNAME, RDS_PASSWORD 불러오기
+                    withCredentials([string(credentialsId: 'RDS_URL', variable: 'RDS_URL'),
+                                     string(credentialsId: 'RDS_USER', variable: 'RDS_USER'),
+                                     string(credentialsId: 'RDS_PWD', variable: 'RDS_PWD')]) {
+                        
+                        // 자격 증명 출력 (테스트용, 실제 배포 시 민감 정보 출력하지 않도록 주의)
+                        echo "RDS URL: $RDS_URL"
+                        echo "RDS Username: $RDS_USER"
                     }
                 }
             }
         }
-    }
 
-    post {
-        success {
-            echo 'Build and deployment successful!'
+        stage('Build') {
+            steps {
+                script {
+                    // 빌드 단계에서 환경 변수를 이용하여 빌드 수행
+                    sh "./gradlew build -Drds.url=${env.RDS_URL} -Drds.username=${env.RDS_USER} -Drds.password=${env.RDS_PWD}"
+                }
+            }
         }
-        failure {
-            echo 'Build or deployment failed.'
+
+        stage('Deploy') {
+            steps {
+                echo 'Deployment Stage'
+            }
         }
     }
 }
