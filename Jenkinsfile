@@ -1,6 +1,12 @@
 pipeline {
     agent any
 
+    environment {
+        RDS_URL = credentials('RDS_URL')
+        RDS_USERNAME = credentials('RDS_URL')
+        RDS_PASSWORD = credentials('RDS_PWD')
+    }
+
     stages {
         stage('Build') {
             steps {
