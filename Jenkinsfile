@@ -11,10 +11,7 @@ pipeline {
         stage('Build') {
             steps {
                 script {
-                    // Gradle Wrapper에 실행 권한 부여
-                    sh 'chmod +x ./gradlew'
-                    // Spring Boot 빌드
-                    sh './gradlew build'
+                    sh "./gradlew build -Drds.url=${env.RDS_URL} -Drds.username=${env.RDS_USER} -Drds.password=${env.RDS_PWD}"
                 }
             }
         }
